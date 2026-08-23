@@ -1,0 +1,44 @@
+package commands
+
+import (
+	"fmt"
+	"strings"
+
+	"github.com/marcus/nightshift/internal/config"
+)
+
+func resolveProviderList(cfg *config.Config, filter string) ([]string, error) {
+	filter = strings.ToLower(strings.TrimSpace(filter))
+	if filter != "" {
+		switch filter {
+		case "claude":
+			if !cfg.Providers.Claude.Enabled {
+				return nil, fmt.Errorf("claude provider not enabled")
+			}
+		case "codex":
+			if !cfg.Providers.Codex.Enabled {
+				return nil, fmt.Errorf("codex provider not enabled")
+			}
+		case "copilot":
+			if !cfg.Providers.Copilot.Enabled {
+				return nil, fmt.Errorf("copilot provider not enabled")
+			}
+		default:
+			return nil, fmt.Errorf("unknown provider: %s (valid: claude, codex, copilot)", filter)
+		}
+		return []string{filter}, nil
+	}
+
+	providerList := []string{}
+	if cfg.Providers.Claude.Enabled {
+		providerList = append(providerList, "claude")
+	}
+	if cfg.Providers.Codex.Enabled {
+		providerList = append(providerList, "codex")
+	}
+	if cfg.Providers.Copilot.Enabled {
+		providerList = append(providerList, "copilot")
+	}
+
+	return providerList, nil
+}
