@@ -5,6 +5,7 @@ set -uo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 NORMALIZE="$SCRIPT_DIR/commit-msg-normalize.sh"
+HOOK="$SCRIPT_DIR/commit-msg.sh"
 
 PASS=0
 FAIL=0
@@ -89,6 +90,30 @@ assert_eq "body preserved" \
 
 Explain the new install flow in more detail." \
   "$(cat "$f")"
+rm -f "$f"
+
+echo "hook exempts merge commits (source arg) from type-prefix validation"
+f=$(tmpfile)
+printf "Merge branch 'main' into feat/x\n" > "$f"
+"$HOOK" "$f" merge >/dev/null 2>&1
+status=$?
+assert_status "exits 0" 0 "$status"
+rm -f "$f"
+
+echo "hook exempts revert commits (subject sniff) from type-prefix validation"
+f=$(tmpfile)
+printf 'Revert "feat: add widget support"\n' > "$f"
+"$HOOK" "$f" >/dev/null 2>&1
+status=$?
+assert_status "exits 0" 0 "$status"
+rm -f "$f"
+
+echo "hook still rejects a non-merge message with an unknown type"
+f=$(tmpfile)
+printf 'oops: this is not a real type\n' > "$f"
+"$HOOK" "$f" >/dev/null 2>&1
+status=$?
+assert_status "exits non-zero" 1 "$([[ $status -ne 0 ]] && echo 1 || echo 0)"
 rm -f "$f"
 
 echo ""

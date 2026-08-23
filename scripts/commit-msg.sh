@@ -11,6 +11,23 @@ set -euo pipefail
 # BASH_SOURCE (which doesn't follow the .git/hooks/ symlink on macOS).
 REPO_ROOT="$(git rev-parse --show-toplevel)"
 MSG_FILE="$1"
+# git passes a second arg (commit source) for merge, squash, commit
+# (amend/-c/-C), and template-derived messages. Merge and revert commits
+# in particular have their own conventional subject lines ("Merge branch
+# ...", "Revert \"...\"") that don't fit the <type>: <subject> shape, so
+# normalizing/rejecting them would block routine `git merge --no-ff` and
+# `git revert` usage. Skip normalization for those sources.
+SOURCE="${2:-}"
+
+case "$SOURCE" in
+  merge|squash)
+    exit 0
+    ;;
+esac
+
+if head -n1 "$MSG_FILE" | grep -qE '^(Merge |Revert ")'; then
+  exit 0
+fi
 
 set +e
 "$REPO_ROOT/scripts/commit-msg-normalize.sh" "$MSG_FILE"

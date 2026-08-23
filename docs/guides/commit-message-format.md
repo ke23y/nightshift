@@ -34,6 +34,10 @@ finalized. It will:
 - reject the commit (non-zero exit) if the subject doesn't start with a recognized type
 - warn (but not block) if the subject line exceeds 72 characters
 
+Merge commits (`git merge --no-ff`), squash merges, and reverts (`git revert`) are exempt from
+the type-prefix requirement — the hook checks git's commit-source argument and also recognizes
+`Merge ...` / `Revert "..."` subjects, so these routine operations aren't blocked.
+
 ## Installing the hook
 
 ```bash
